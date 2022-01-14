@@ -20,12 +20,13 @@ namespace PrijemRemont
     internal sealed class PrijemRemont : StatefulService
     {
         private RemontService remontService = null;
-        
+        private MailRepository mailRepository = null;
 
         public PrijemRemont(StatefulServiceContext context)
             : base(context)
         {
             remontService = new RemontService(this.StateManager);
+            mailRepository = new MailRepository();
         }
 
         /// <summary>
@@ -79,6 +80,25 @@ namespace PrijemRemont
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
+
+                foreach (string email in unreadEmails)
+                {
+                    try
+                    {
+                        string[] parts = email.Split('\n');
+                        int id = int.Parse(parts[0].Split(':')[1]);
+                        double warehouseTime = double.Parse(parts[1].Split(':')[1]);
+                        double workHours = double.Parse(parts[2].Split(':')[1]);
+
+                        await remontService.SendToRemont(id, warehouseTime, workHours);
+                    }
+                    catch (Exception ex)
+                    {
+                        continue;
+                    }
+                }
 
                 using (var tx = this.StateManager.CreateTransaction())
                 {
