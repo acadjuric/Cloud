@@ -19,4 +19,8 @@
     <PackageReference Include="Microsoft.ServiceFabric.Services" Version="5.2.1235" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PrijemRemont\PrijemRemont.csproj" />
+  </ItemGroup>
+
 </Project>
