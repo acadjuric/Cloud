@@ -34,6 +34,7 @@
   <ItemGroup>
     <ProjectReference Include="..\IstorijaRemont\IstorijaRemont.csproj" />
     <ProjectReference Include="..\PrijemRemont\PrijemRemont.csproj" />
+    <ProjectReference Include="..\Publisher\Publisher.csproj" />
     <ProjectReference Include="..\Web\Web.csproj">
       <ServiceLaunchUrl>http://{MachineName}:{ServicePort}/</ServiceLaunchUrl>
     </ProjectReference>

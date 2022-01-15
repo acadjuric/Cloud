@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrijemRemont", "PrijemRemon
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IstorijaRemont", "IstorijaRemont\IstorijaRemont.csproj", "{0BA63C32-3C9D-4532-A77A-7556F616C8C3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Publisher", "Publisher\Publisher.csproj", "{20FFA420-22B6-4219-96F2-C1E143B5519D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,12 @@ Global
 		{0BA63C32-3C9D-4532-A77A-7556F616C8C3}.Release|Any CPU.ActiveCfg = Release|x64
 		{0BA63C32-3C9D-4532-A77A-7556F616C8C3}.Release|x64.ActiveCfg = Release|x64
 		{0BA63C32-3C9D-4532-A77A-7556F616C8C3}.Release|x64.Build.0 = Release|x64
+		{20FFA420-22B6-4219-96F2-C1E143B5519D}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{20FFA420-22B6-4219-96F2-C1E143B5519D}.Debug|x64.ActiveCfg = Debug|x64
+		{20FFA420-22B6-4219-96F2-C1E143B5519D}.Debug|x64.Build.0 = Debug|x64
+		{20FFA420-22B6-4219-96F2-C1E143B5519D}.Release|Any CPU.ActiveCfg = Release|x64
+		{20FFA420-22B6-4219-96F2-C1E143B5519D}.Release|x64.ActiveCfg = Release|x64
+		{20FFA420-22B6-4219-96F2-C1E143B5519D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
