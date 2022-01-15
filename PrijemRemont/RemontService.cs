@@ -1,20 +1,24 @@
 ﻿using Microsoft.ServiceFabric.Data;
 using Microsoft.ServiceFabric.Data.Collections;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace PrijemRemont
 {
     public class RemontService : IRemont
     {
         private IReliableStateManager state = null;
-
-        public RemontService(IReliableStateManager state)
+        private CloudTable tabela = null;
+        public RemontService(IReliableStateManager state, CloudTable tabela)
         {
             this.state = state;
+            this.tabela = tabela;
         }
 
         public async Task<bool> SendToRemont(int id, double timeInWarehouse, double workHours)
@@ -28,7 +32,7 @@ namespace PrijemRemont
                     return false;
                 }
 
-                Remont remont = new Remont()
+                Remont remont = new Remont(id)
                 {
                     DeviceId = id,
                     HoursInWarehouse = timeInWarehouse,
@@ -41,13 +45,29 @@ namespace PrijemRemont
                 await uredjajiNaRemontu.AddAsync(tx, id, remont);
 
                 await tx.CommitAsync();
-                return true;
+
+                await WriteToTable(remont);
             }
+
+            
+            return true;
         }
 
-        public async Task<bool> WriteToTable()
+        public async Task<bool> WriteToTable(Remont remont)
         {
-            throw new NotImplementedException();
+            TableOperation addRemont = TableOperation.Insert(remont);
+            try
+            {
+                var a = await tabela.ExecuteAsync(addRemont);
+            }
+            catch(StorageException ex)
+            {
+                //The remote server returned an error: (409) Conflict.
+                string a = ex.Message;
+                return false;
+            }
+
+            return true;
         }
     }
 }

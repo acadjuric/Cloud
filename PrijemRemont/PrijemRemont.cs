@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Fabric;
 using System.Globalization;
 using System.Linq;
@@ -11,6 +12,8 @@ using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Communication.Wcf;
 using Microsoft.ServiceFabric.Services.Communication.Wcf.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace PrijemRemont
 {
@@ -21,11 +24,20 @@ namespace PrijemRemont
     {
         private RemontService remontService = null;
         private MailRepository mailRepository = null;
+        private CloudStorageAccount _storageAccount;
+        private CloudTable _table;
 
         public PrijemRemont(StatefulServiceContext context)
             : base(context)
         {
-            remontService = new RemontService(this.StateManager);
+            string connectionString = ConfigurationManager.AppSettings["CloudConnectionString"];
+            _storageAccount = CloudStorageAccount.Parse(connectionString);
+
+            CloudTableClient tableClient = new CloudTableClient(new Uri(_storageAccount.TableEndpoint.AbsoluteUri), _storageAccount.Credentials);
+            _table = tableClient.GetTableReference("CloudProjekat");
+            _table.CreateIfNotExists();
+
+            remontService = new RemontService(this.StateManager, _table);
             mailRepository = new MailRepository();
         }
 
@@ -77,6 +89,8 @@ namespace PrijemRemont
 
             var uredjajiNaRemontu = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
 
+            await LoadDevicesOnRemontFromTable();
+
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -100,23 +114,41 @@ namespace PrijemRemont
                     }
                 }
 
-                using (var tx = this.StateManager.CreateTransaction())
-                {
-                    var result = await myDictionary.TryGetValueAsync(tx, "Counter");
+                //using (var tx = this.StateManager.CreateTransaction())
+                //{
+                //    var result = await myDictionary.TryGetValueAsync(tx, "Counter");
 
-                    ServiceEventSource.Current.ServiceMessage(this.Context, "Current Counter Value: {0}",
-                        result.HasValue ? result.Value.ToString() : "Value does not exist.");
+                //    ServiceEventSource.Current.ServiceMessage(this.Context, "Current Counter Value: {0}",
+                //        result.HasValue ? result.Value.ToString() : "Value does not exist.");
 
-                    await myDictionary.AddOrUpdateAsync(tx, "Counter", 0, (key, value) => ++value);
+                //    await myDictionary.AddOrUpdateAsync(tx, "Counter", 0, (key, value) => ++value);
 
-                    // If an exception is thrown before calling CommitAsync, the transaction aborts, all changes are 
-                    // discarded, and nothing is saved to the secondary replicas.
-                    await tx.CommitAsync();
-                }
+                //    // If an exception is thrown before calling CommitAsync, the transaction aborts, all changes are 
+                //    // discarded, and nothing is saved to the secondary replicas.
+                //    await tx.CommitAsync();
+                //}
 
            
 
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            }
+        }
+
+        private async Task LoadDevicesOnRemontFromTable()
+        {
+            //Ucitavanje uredjaja koji su posalti na remont, ali remont nije zavrsen (time Spent in remont == -1)
+            var uredjajiNaRemontu = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+
+            var uredjajiIzTabele = _table.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey.Equals("Remont") && item.TimeSpentInRemont.Equals(-1)).ToList();
+
+            using(var tx = this.StateManager.CreateTransaction())
+            {
+                foreach (var item in uredjajiIzTabele)
+                {
+                    await uredjajiNaRemontu.AddAsync(tx, item.DeviceId, item);
+                }
+
+                await tx.CommitAsync();
             }
         }
     }

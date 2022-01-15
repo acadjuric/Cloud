@@ -16,10 +16,15 @@ namespace PrijemRemont
         public DateTime SendToRemont { get; set; }
         public double TimeSpentInRemont { get; set; }
 
-        public Remont()
+        public Remont(int id)
         {
             PartitionKey = "Remont";
-            RowKey = DeviceId.ToString();
+            RowKey = id.ToString();
+        }
+
+        public Remont()
+        {
+
         }
     }
 }
