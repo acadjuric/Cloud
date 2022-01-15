@@ -16,5 +16,12 @@ namespace PrijemRemont
 
         [OperationContract]
         Task<bool> WriteToTable(Remont remont);
+
+        [OperationContract]
+        Task<List<Remont>> GetAllRemonts();
+
+        [OperationContract]
+        Task DeleteHistoryRemontsFromCurrentRemonts(List<int> keys);
+
     }
 }

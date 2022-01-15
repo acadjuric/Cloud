@@ -32,6 +32,7 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IstorijaRemont\IstorijaRemont.csproj" />
     <ProjectReference Include="..\PrijemRemont\PrijemRemont.csproj" />
     <ProjectReference Include="..\Web\Web.csproj">
       <ServiceLaunchUrl>http://{MachineName}:{ServicePort}/</ServiceLaunchUrl>

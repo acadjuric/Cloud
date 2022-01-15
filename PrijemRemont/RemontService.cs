@@ -21,6 +21,41 @@ namespace PrijemRemont
             this.tabela = tabela;
         }
 
+        public async Task DeleteHistoryRemontsFromCurrentRemonts(List<int> keys)
+        {
+            var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+
+            using (var tx = this.state.CreateTransaction())
+            {
+                foreach (var key in keys)
+                {
+                    if (await uredjajiNaRemontu.ContainsKeyAsync(tx, key))
+                    {
+                        await uredjajiNaRemontu.TryRemoveAsync(tx, key);
+                    }
+                }
+
+                await tx.CommitAsync();
+            }
+        }
+
+        public async Task<List<Remont>> GetAllRemonts()
+        {
+            List<Remont> retVal = new List<Remont>();
+
+            var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+            using (var tx = this.state.CreateTransaction())
+            {
+                var enumerator = (await uredjajiNaRemontu.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
+                while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                {
+                    retVal.Add(enumerator.Current.Value);
+                }
+            }
+
+            return retVal;
+        }
+
         public async Task<bool> SendToRemont(int id, double timeInWarehouse, double workHours)
         {
             var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
@@ -37,7 +72,7 @@ namespace PrijemRemont
                     DeviceId = id,
                     HoursInWarehouse = timeInWarehouse,
                     WorkHours = workHours,
-                    NumberOfRemont = await uredjajiNaRemontu.GetCountAsync(tx)  + 1,
+                    NumberOfRemont = await uredjajiNaRemontu.GetCountAsync(tx) + 1,
                     SendToRemont = DateTime.Now,
                     TimeSpentInRemont = -1,
                 };
@@ -49,7 +84,7 @@ namespace PrijemRemont
                 await WriteToTable(remont);
             }
 
-            
+
             return true;
         }
 
@@ -60,7 +95,7 @@ namespace PrijemRemont
             {
                 var a = await tabela.ExecuteAsync(addRemont);
             }
-            catch(StorageException ex)
+            catch (StorageException ex)
             {
                 //The remote server returned an error: (409) Conflict.
                 string a = ex.Message;
