@@ -22,9 +22,11 @@ namespace IstorijaRemont
             this.tabela = table;
         }
 
-        public Task<List<object>> GetAllHisotryRemonts()
+        public Task<List<Remont>> GetAllHisotryRemonts()
         {
-            throw new NotImplementedException();
+            return Task.FromResult<List<Remont>>(
+                tabela.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey == "Remont" && item.TimeSpentInRemont != -1).ToList()
+                );
         }
 
         public async Task WriteHistoryRemontsToTable()

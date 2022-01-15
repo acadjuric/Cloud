@@ -12,7 +12,7 @@ namespace IstorijaRemont
     {
 
         [OperationContract]
-        Task<List<object>> GetAllHisotryRemonts();
+        Task<List<PrijemRemont.Remont>> GetAllHisotryRemonts();
 
         [OperationContract]
         Task WriteHistoryRemontsToTable();

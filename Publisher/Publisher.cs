@@ -19,6 +19,7 @@ namespace Publisher
     internal sealed class Publisher : StatelessService
     {
         private PublisherService publisherService = null;
+
         public Publisher(StatelessServiceContext context)
             : base(context)
         {
@@ -71,11 +72,14 @@ namespace Publisher
 
             while (true)
             {
+                await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+
                 cancellationToken.ThrowIfCancellationRequested();
 
-                ServiceEventSource.Current.ServiceMessage(this.Context, "Working-{0}", ++iterations);
+                var result = await publisherService.GetRemontAndHistoryRemont();
 
-                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                ServiceEventSource.Current.ServiceMessage(this.Context, "Working-{0}", ++iterations);
+                
             }
         }
     }
