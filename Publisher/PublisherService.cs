@@ -14,28 +14,59 @@ namespace Publisher
 {
     public class PublisherService : IPublisher
     {
-        public async Task<Tuple<List<Remont>, List<Remont>>> GetRemontAndHistoryRemont()
+
+        ServicePartitionClient<WcfCommunicationClient<IRemont>> prijemRemont = null;
+        ServicePartitionClient<WcfCommunicationClient<IHistoryRemont>> historyRemont = null;
+
+        public PublisherService()
         {
             var binding = WcfUtility.CreateTcpClientBinding();
             var bindingHistory = WcfUtility.CreateTcpClientBinding();
 
-            ServicePartitionClient<WcfCommunicationClient<IRemont>> prijemRemont = new ServicePartitionClient<WcfCommunicationClient<IRemont>>(
+            prijemRemont = new ServicePartitionClient<WcfCommunicationClient<IRemont>>(
                 new WcfCommunicationClientFactory<IRemont>(binding),
                 new Uri("fabric:/Project3/PrijemRemont"),
                 new ServicePartitionKey(0)
                 );
 
-            ServicePartitionClient<WcfCommunicationClient<IHistoryRemont>> historyRemont = new ServicePartitionClient<WcfCommunicationClient<IHistoryRemont>>(
+            historyRemont = new ServicePartitionClient<WcfCommunicationClient<IHistoryRemont>>(
                 new WcfCommunicationClientFactory<IHistoryRemont>(bindingHistory),
                 new Uri("fabric:/Project3/IstorijaRemont"),
                 new ServicePartitionKey(0)
                 );
+        }
 
-            List<Remont> devicesOnRemont = await prijemRemont.InvokeWithRetryAsync(client => client.Channel.GetAllRemonts());
 
-            List<Remont> devicesHistoryRemont = await historyRemont.InvokeWithRetryAsync(client => client.Channel.GetAllHisotryRemonts());
+        public async Task<List<Device>> GetDevices()
+        {
+            try
+            {
+                return await prijemRemont.InvokeWithRetryAsync(client => client.Channel.GetAllDevices());
+            }
+            catch (Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
+            }
+        }
 
-            return new Tuple<List<Remont>, List<Remont>>(devicesOnRemont, devicesHistoryRemont);
+        public async Task<Tuple<List<Remont>, List<Remont>>> GetRemontAndHistoryRemont()
+        {
+            try
+            {
+                List<Remont> devicesOnRemont = await prijemRemont.InvokeWithRetryAsync(client => client.Channel.GetAllRemonts());
+
+                List<Remont> devicesHistoryRemont = await historyRemont.InvokeWithRetryAsync(client => client.Channel.GetAllHisotryRemonts());
+
+                return new Tuple<List<Remont>, List<Remont>>(devicesOnRemont, devicesHistoryRemont);
+
+            }
+            catch (Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
+            }
+
         }
     }
 }

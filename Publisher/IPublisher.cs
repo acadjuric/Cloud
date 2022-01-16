@@ -14,5 +14,8 @@ namespace Publisher
         //Prva lista su aktivni podaci, a druga istorijski
         [OperationContract]
         Task<Tuple<List<Remont>, List<Remont>>> GetRemontAndHistoryRemont();
+
+        [OperationContract]
+        Task<List<Device>> GetDevices();
     }
 }

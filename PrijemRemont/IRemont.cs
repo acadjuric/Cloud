@@ -23,5 +23,8 @@ namespace PrijemRemont
         [OperationContract]
         Task DeleteHistoryRemontsFromCurrentRemonts(List<int> keys);
 
+        [OperationContract]
+        Task<List<Device>> GetAllDevices();
+
     }
 }

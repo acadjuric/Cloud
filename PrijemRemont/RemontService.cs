@@ -127,6 +127,33 @@ namespace PrijemRemont
             return true;
         }
 
+        public async Task<List<Device>> GetAllDevices()
+        {
+            try
+            {
+                List<Device> retVal = new List<Device>();
+                var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
+                using (var tx = this.state.CreateTransaction())
+                {
+                    var enumerator = (await devices.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
+                    while( await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                    {
+                        if(enumerator.Current.Value.OnRemont == false)
+                        {
+                            retVal.Add(enumerator.Current.Value);
+                        }
+                    }
+                }
+
+                return retVal;
+            }
+            catch( Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
+            }
+        }
+
         public async Task WriteInitialDevicesToTable()
         {
             List<Device> uredjaji = new List<Device>()
@@ -160,5 +187,7 @@ namespace PrijemRemont
 
             }
         }
+
+        
     }
 }
