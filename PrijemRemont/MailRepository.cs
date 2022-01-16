@@ -32,10 +32,10 @@ namespace PrijemRemont
             return GetMails(mailBox, "ALL").Cast<Message>();
         }
 
-        public async Task<List<string>> GetBodyFromUnreadMails()
+        public Task<List<string>> GetBodyFromUnreadMails()
         {
             var emailList = GetUnreadMails("inbox");
-            return emailList.Select(x => x.BodyText.Text).ToList();
+            return Task.FromResult<List<string>>(emailList.Select(x => x.BodyText.Text).ToList());
         }
 
         private IEnumerable<Message> GetUnreadMails(string mailBox)

@@ -15,7 +15,7 @@ namespace PrijemRemont
         Task<bool> SendToRemont(int id, double timeInWarehouse, double workHours);
 
         [OperationContract]
-        Task<bool> WriteToTable(Remont remont);
+        Task WriteToTable();
 
         [OperationContract]
         Task<List<Remont>> GetAllRemonts();

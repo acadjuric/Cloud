@@ -50,7 +50,7 @@ namespace PrijemRemont
                     await tx.CommitAsync();
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 string a = ex.Message;
                 throw ex;
@@ -75,7 +75,7 @@ namespace PrijemRemont
 
                 return retVal;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 string a = ex.Message;
                 throw ex;
@@ -122,36 +122,61 @@ namespace PrijemRemont
 
                     await tx.CommitAsync();
 
-                    await WriteToTable(remont);
+                    //await WriteToTable(remont);
                 }
 
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 string a = ex.Message;
                 throw ex;
             }
         }
 
-        public async Task<bool> WriteToTable(Remont remont)
+        public async Task WriteToTable()
         {
             try
             {
-                TableOperation addRemont = TableOperation.Insert(remont);
-                try
+                var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+
+                var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
+
+                using (var tx = this.state.CreateTransaction())
                 {
-                    var a = await tabela.ExecuteAsync(addRemont);
-                }
-                catch (StorageException ex)
-                {
-                    //The remote server returned an error: (409) Conflict.
-                    string a = ex.Message;
-                    return false;
+
+                    TableBatchOperation batchOperationDevices = new TableBatchOperation();
+                    TableBatchOperation batchOperationRemonts = new TableBatchOperation();
+
+                    var devicesEnumerator = (await devices.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
+                    while (await devicesEnumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                    {
+                        batchOperationDevices.InsertOrMerge(devicesEnumerator.Current.Value);
+                    }
+
+                    //baca exception ako je batch prazan a pokusa se tabela.execute(batch)
+                    if (batchOperationDevices.Count > 0)
+                        await tabela.ExecuteBatchAsync(batchOperationDevices);
+
+                    var enumerator = (await uredjajiNaRemontu.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
+                    while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                    {
+                        batchOperationRemonts.InsertOrMerge(enumerator.Current.Value);
+                    }
+
+                    //baca exception ako je batch prazan a pokusa se tabela.execute(batch)
+                    if (batchOperationRemonts.Count > 0)
+                        await tabela.ExecuteBatchAsync(batchOperationRemonts);
+
                 }
 
-                return true;
+            }
+            catch (StorageException ex)
+            {
+                //The remote server returned an error: (409) Conflict.
+                string a = ex.Message;
+                throw ex;
             }
             catch (Exception ex)
             {
@@ -169,9 +194,9 @@ namespace PrijemRemont
                 using (var tx = this.state.CreateTransaction())
                 {
                     var enumerator = (await devices.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
-                    while( await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                    while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
                     {
-                        if(enumerator.Current.Value.OnRemont == false)
+                        if (enumerator.Current.Value.OnRemont == false)
                         {
                             retVal.Add(enumerator.Current.Value);
                         }
@@ -180,7 +205,7 @@ namespace PrijemRemont
 
                 return retVal;
             }
-            catch( Exception ex)
+            catch (Exception ex)
             {
                 string a = ex.Message;
                 throw ex;
@@ -210,7 +235,7 @@ namespace PrijemRemont
                 try
                 {
                     TableOperation insert = TableOperation.Insert(item);
-                    tabela.Execute(insert);
+                    await tabela.ExecuteAsync(insert);
                 }
                 catch (StorageException ex)
                 {
@@ -221,6 +246,6 @@ namespace PrijemRemont
             }
         }
 
-        
+
     }
 }

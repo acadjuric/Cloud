@@ -94,11 +94,18 @@ namespace PrijemRemont
             // inicijalni upis uredjaja u cloud tabelu
             //await remontService.WriteInitialDevicesToTable();
 
+            var timer = new System.Threading.Timer((e) =>
+            {
+                Task.Factory.StartNew(remontService.WriteToTable);
+
+            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+
             while (true)
             {
-                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
 
                     foreach (string email in unreadEmails)
@@ -119,6 +126,13 @@ namespace PrijemRemont
                     }
 
                     await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                }
+                catch (OperationCanceledException ex)
+                {
+                    string a = ex.Message;
+                    // servis pada -> upis u bazu
+
+                    await Task.Factory.StartNew(remontService.WriteToTable);
                 }
                 catch (Exception ex)
                 {
