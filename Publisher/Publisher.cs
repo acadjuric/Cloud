@@ -72,14 +72,15 @@ namespace Publisher
 
             while (true)
             {
-                await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var result = await publisherService.GetRemontAndHistoryRemont();
+                //var result = await publisherService.GetRemontAndHistoryRemont();
 
                 ServiceEventSource.Current.ServiceMessage(this.Context, "Working-{0}", ++iterations);
-                
+
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+
             }
         }
     }

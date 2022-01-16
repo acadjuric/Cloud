@@ -7,9 +7,9 @@
         }
 
         .forma {
-            height:300px;
-            display:block;
-            justify-content:space-between;
+            height: 300px;
+            display: block;
+            justify-content: space-between;
         }
 
         table, th, td {
@@ -51,26 +51,36 @@
                 <input type="submit" value="Posalji na remont" style="height:30px" />
             </form>
         </div>
-
+        <form method="get" action="/Home/GetData">
+            <input type="submit" value="Dobavi aktivne i istorijske podatke" />
+        </form>
         <br /><br />
         <h3>Aktivni</h3>
         <div class="aktivni">
             <table>
                 <tr>
-                    <th>Company</th>
-                    <th>Contact</th>
-                    <th>Country</th>
+                    <th>Device id</th>
+                    <th>Time in warehouse (hours)</th>
+                    <th>Work hours</th>
+                    <th>Remont number</th>
+                    <th>Send to remont </th>
+                    @*<th>Remont time (minutes)</th>*@
                 </tr>
-                <tr>
-                    <td>Alfreds Futterkiste</td>
-                    <td>Maria Anders</td>
-                    <td>Germany</td>
-                </tr>
-                <tr>
-                    <td>Centro comercial Moctezuma</td>
-                    <td>Francisco Chang</td>
-                    <td>Mexico</td>
-                </tr>
+                @if (ViewData["activeData"] != null)
+                {
+                    @foreach (var item in ViewData["activeData"] as List<PrijemRemont.Remont>)
+                    {
+                        <tr>
+                            <td>@item.DeviceId</td>
+                            <td>@item.HoursInWarehouse</td>
+                            <td>@item.WorkHours</td>
+                            <td>@item.NumberOfRemont</td>
+                            <td>@item.SendToRemont</td>
+                            @*<td>@item.TimeSpentInRemont</td>*@
+                        </tr>
+
+                    }
+                }
             </table>
         </div>
 
@@ -80,20 +90,28 @@
         <div class="istorija">
             <table>
                 <tr>
-                    <th>Company</th>
-                    <th>Contact</th>
-                    <th>Country</th>
+                    <th>Device id</th>
+                    <th>Time in warehouse (hours)</th>
+                    <th>Work hours</th>
+                    <th>Remont number</th>
+                    <th>Send to remont </th>
+                    <th>Remont time (minutes)</th>
                 </tr>
-                <tr>
-                    <td>Alfreds Futterkiste</td>
-                    <td>Maria Anders</td>
-                    <td>Germany</td>
-                </tr>
-                <tr>
-                    <td>Centro comercial Moctezuma</td>
-                    <td>Francisco Chang</td>
-                    <td>Mexico</td>
-                </tr>
+                @if (ViewData["historyData"] != null)
+                {
+                    @foreach (var item in ViewData["historyData"] as List<PrijemRemont.Remont>)
+                    {
+                        <tr>
+                            <td>@item.DeviceId</td>
+                            <td>@item.HoursInWarehouse</td>
+                            <td>@item.WorkHours</td>
+                            <td>@item.NumberOfRemont</td>
+                            <td>@item.SendToRemont</td>
+                            <td>@item.TimeSpentInRemont</td>
+                        </tr>
+
+                    }
+                }
             </table>
         </div>
     </div>
