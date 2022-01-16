@@ -84,18 +84,47 @@ namespace Web.Controllers
                 {
                     string a = e.Message;
                     (client as ICommunicationObject)?.Abort();
-                    return null;
+                    throw e;
                 }
             }
             
         }
 
-        public IActionResult About()
-        {
-            ViewData["Message"] = "Your application description page.";
 
-            return View();
+
+        [HttpGet]
+        [Route("Home/GetDevices")]
+        public async Task<JsonResult> GetDevices()
+        {
+            var myBinding = new NetTcpBinding(SecurityMode.None);
+            var myEndpoint = new EndpointAddress("net.tcp://localhost:46000/PublisherEndpoint");
+
+
+            using (var myChannelFactory = new ChannelFactory<IPublisher>(myBinding, myEndpoint))
+            {
+                IPublisher client = null;
+
+                try
+                {
+                    client = myChannelFactory.CreateChannel();
+                    List<Device> result = await client.GetDevices();
+
+                    ((ICommunicationObject)client).Close();
+                    myChannelFactory.Close();
+
+
+                    return Json(result);
+                }
+                catch (Exception e)
+                {
+                    string a = e.Message;
+                    (client as ICommunicationObject)?.Abort();
+                    throw e;
+                }
+            }
+
         }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
