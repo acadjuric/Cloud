@@ -16,6 +16,69 @@
             border: 1px solid black;
         }
     </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" ></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var serviceUrl = "Home/GetData";
+
+            console.log("YAY");
+
+            setInterval(function () {
+                console.log("sad saljem ajax poziv");
+                $.ajax({
+                    type: 'GET',
+                    url: serviceUrl,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data, status) {
+
+                        console.log(data);
+
+                        $(".aktivni").html(kreirajTabelu(data.aktivni, false));
+
+                        $(".istorija").html(kreirajTabelu(data.istorija, true));
+                    },
+                    error: function () {
+
+                        alert("error");
+                    }
+                })
+            }, 1000 * 60 * 1);
+            //milisec * sec * min
+
+
+            function kreirajTabelu(data, istorijski) {
+                var table = "<table><tr> <th> Device id</th> <th>Time in warehouse (hours)</th> <th>Work hours</th> <th>Remont number</th> <th>Send to remont </th>";
+
+                if (istorijski) {
+                    table += "<th>Remont time (minutes)</th>";
+                }
+
+                table += "</tr>";
+                console.log(data);
+
+                for (let remont of data) {
+                    console.log(remont);
+                    table += "<tr><td>" + remont.deviceId + "</td>";
+                    table += "<td>" + remont.hoursInWarehouse + "</td>";
+                    table += "<td>" + remont.workHours + "</td>";
+                    table += "<td>" + remont.numberOfRemont + "</td>";
+                    table += "<td>" + remont.sendToRemont + "</td>";
+
+                    if (istorijski) {
+                        table += "<td>" + remont.timeSpentInRemont + "</td>";
+                    }
+
+                    table += "</tr>";
+                }
+
+                table += "</table>";
+
+                return table;
+            }
+        })
+    </script>
 </head>
 <body>
     <div class="container">
@@ -51,68 +114,18 @@
                 <input type="submit" value="Posalji na remont" style="height:30px" />
             </form>
         </div>
-        <form method="get" action="/Home/GetData">
-            <input type="submit" value="Dobavi aktivne i istorijske podatke" />
-        </form>
+
         <br /><br />
         <h3>Aktivni</h3>
         <div class="aktivni">
-            <table>
-                <tr>
-                    <th>Device id</th>
-                    <th>Time in warehouse (hours)</th>
-                    <th>Work hours</th>
-                    <th>Remont number</th>
-                    <th>Send to remont </th>
-                    @*<th>Remont time (minutes)</th>*@
-                </tr>
-                @if (ViewData["activeData"] != null)
-                {
-                    @foreach (var item in ViewData["activeData"] as List<PrijemRemont.Remont>)
-                    {
-                        <tr>
-                            <td>@item.DeviceId</td>
-                            <td>@item.HoursInWarehouse</td>
-                            <td>@item.WorkHours</td>
-                            <td>@item.NumberOfRemont</td>
-                            <td>@item.SendToRemont</td>
-                            @*<td>@item.TimeSpentInRemont</td>*@
-                        </tr>
 
-                    }
-                }
-            </table>
         </div>
 
         <hr />
 
         <h3>Istorija</h3>
         <div class="istorija">
-            <table>
-                <tr>
-                    <th>Device id</th>
-                    <th>Time in warehouse (hours)</th>
-                    <th>Work hours</th>
-                    <th>Remont number</th>
-                    <th>Send to remont </th>
-                    <th>Remont time (minutes)</th>
-                </tr>
-                @if (ViewData["historyData"] != null)
-                {
-                    @foreach (var item in ViewData["historyData"] as List<PrijemRemont.Remont>)
-                    {
-                        <tr>
-                            <td>@item.DeviceId</td>
-                            <td>@item.HoursInWarehouse</td>
-                            <td>@item.WorkHours</td>
-                            <td>@item.NumberOfRemont</td>
-                            <td>@item.SendToRemont</td>
-                            <td>@item.TimeSpentInRemont</td>
-                        </tr>
 
-                    }
-                }
-            </table>
         </div>
     </div>
 

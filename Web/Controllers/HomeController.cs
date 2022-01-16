@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.ServiceModel;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -55,11 +56,12 @@ namespace Web.Controllers
 
         [HttpGet]
         [Route("Home/GetData")]
-        public async Task<ActionResult> GetData()
+        public async Task<JsonResult> GetData()
         {
             var myBinding = new NetTcpBinding(SecurityMode.None);
             var myEndpoint = new EndpointAddress("net.tcp://localhost:46000/PublisherEndpoint");
 
+            
             using (var myChannelFactory = new ChannelFactory<IPublisher>(myBinding, myEndpoint))
             {
                 IPublisher client = null;
@@ -67,22 +69,25 @@ namespace Web.Controllers
                 try
                 {
                     client = myChannelFactory.CreateChannel();
-
-                    var result = await client.GetRemontAndHistoryRemont();
+                    Tuple<List<Remont>, List<Remont>> result = await client.GetRemontAndHistoryRemont();
 
                     ViewData["activeData"] = result.Item1;
                     ViewData["historyData"] = result.Item2;
 
                     ((ICommunicationObject)client).Close();
                     myChannelFactory.Close();
+
+
+                    return Json(new { aktivni = result.Item1, istorija = result.Item2 });
                 }
                 catch (Exception e)
                 {
                     string a = e.Message;
                     (client as ICommunicationObject)?.Abort();
+                    return null;
                 }
             }
-            return View("Index");
+            
         }
 
         public IActionResult About()
