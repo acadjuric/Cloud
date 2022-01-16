@@ -23,109 +23,141 @@ namespace PrijemRemont
 
         public async Task DeleteHistoryRemontsFromCurrentRemonts(List<int> keys)
         {
-            var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
-
-            var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
-
-            using (var tx = this.state.CreateTransaction())
+            try
             {
-                foreach (var key in keys)
+                var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+
+                var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
+
+                using (var tx = this.state.CreateTransaction())
                 {
-                    if (await uredjajiNaRemontu.ContainsKeyAsync(tx, key))
+                    foreach (var key in keys)
                     {
-                        //device je objekat koji sadrzi kljuc i vrednost (key value pair)
-                        var device = await devices.TryGetValueAsync(tx, key);
-                        if (device.HasValue)
+                        if (await uredjajiNaRemontu.ContainsKeyAsync(tx, key))
                         {
-                            device.Value.OnRemont = false;
-                            await devices.SetAsync(tx, key, device.Value);
+                            //device je objekat koji sadrzi kljuc i vrednost (key value pair)
+                            var device = await devices.TryGetValueAsync(tx, key);
+                            if (device.HasValue)
+                            {
+                                device.Value.OnRemont = false;
+                                await devices.SetAsync(tx, key, device.Value);
+                            }
+
+                            await uredjajiNaRemontu.TryRemoveAsync(tx, key);
                         }
-
-                        await uredjajiNaRemontu.TryRemoveAsync(tx, key);
                     }
-                }
 
-                await tx.CommitAsync();
+                    await tx.CommitAsync();
+                }
+            }
+            catch(Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
             }
         }
 
         public async Task<List<Remont>> GetAllRemonts()
         {
-            List<Remont> retVal = new List<Remont>();
-
-            var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
-            using (var tx = this.state.CreateTransaction())
+            try
             {
-                var enumerator = (await uredjajiNaRemontu.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
-                while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
-                {
-                    retVal.Add(enumerator.Current.Value);
-                }
-            }
+                List<Remont> retVal = new List<Remont>();
 
-            return retVal;
+                var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+                using (var tx = this.state.CreateTransaction())
+                {
+                    var enumerator = (await uredjajiNaRemontu.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
+                    while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                    {
+                        retVal.Add(enumerator.Current.Value);
+                    }
+                }
+
+                return retVal;
+            }
+            catch(Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
+            }
         }
 
         public async Task<bool> SendToRemont(int id, double timeInWarehouse, double workHours)
         {
-            var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
-
-            var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
-
-            using (var tx = this.state.CreateTransaction())
+            try
             {
-                //device je objekat koji sadrzi kljuc i vrednost (key value pair)
-                var device = await devices.TryGetValueAsync(tx, id);
+                var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
 
-                if (device.HasValue == false)
-                    return false;
+                var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
 
-                if  (await uredjajiNaRemontu.ContainsKeyAsync(tx, id) || device.Value.OnRemont)
+                using (var tx = this.state.CreateTransaction())
                 {
-                    return false;
+                    //device je objekat koji sadrzi kljuc i vrednost (key value pair)
+                    var device = await devices.TryGetValueAsync(tx, id);
+
+                    if (device.HasValue == false)
+                        return false;
+
+                    if (await uredjajiNaRemontu.ContainsKeyAsync(tx, id) || device.Value.OnRemont)
+                    {
+                        return false;
+                    }
+
+                    Remont remont = new Remont(id)
+                    {
+                        DeviceId = id,
+                        DeviceName = device.Value.Name,
+                        HoursInWarehouse = timeInWarehouse,
+                        WorkHours = workHours,
+                        NumberOfRemont = await uredjajiNaRemontu.GetCountAsync(tx) + 1,
+                        SendToRemont = DateTime.Now,
+                        TimeSpentInRemont = -1,
+                    };
+
+                    await uredjajiNaRemontu.AddAsync(tx, id, remont);
+
+                    //device je objekat koji sadrzi kljuc i vrednost (key value pair)
+                    device.Value.OnRemont = true;
+                    await devices.SetAsync(tx, id, device.Value);
+
+                    await tx.CommitAsync();
+
+                    await WriteToTable(remont);
                 }
 
-                Remont remont = new Remont(id)
-                {
-                    DeviceId = id,
-                    DeviceName = device.Value.Name,
-                    HoursInWarehouse = timeInWarehouse,
-                    WorkHours = workHours,
-                    NumberOfRemont = await uredjajiNaRemontu.GetCountAsync(tx) + 1,
-                    SendToRemont = DateTime.Now,
-                    TimeSpentInRemont = -1,
-                };
 
-                await uredjajiNaRemontu.AddAsync(tx, id, remont);
-
-                //device je objekat koji sadrzi kljuc i vrednost (key value pair)
-                device.Value.OnRemont = true;
-                await devices.SetAsync(tx, id, device.Value);
-
-                await tx.CommitAsync();
-
-                await WriteToTable(remont);
+                return true;
             }
-
-
-            return true;
+            catch(Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
+            }
         }
 
         public async Task<bool> WriteToTable(Remont remont)
         {
-            TableOperation addRemont = TableOperation.Insert(remont);
             try
             {
-                var a = await tabela.ExecuteAsync(addRemont);
-            }
-            catch (StorageException ex)
-            {
-                //The remote server returned an error: (409) Conflict.
-                string a = ex.Message;
-                return false;
-            }
+                TableOperation addRemont = TableOperation.Insert(remont);
+                try
+                {
+                    var a = await tabela.ExecuteAsync(addRemont);
+                }
+                catch (StorageException ex)
+                {
+                    //The remote server returned an error: (409) Conflict.
+                    string a = ex.Message;
+                    return false;
+                }
 
-            return true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
+            }
         }
 
         public async Task<List<Device>> GetAllDevices()

@@ -97,50 +97,64 @@ namespace PrijemRemont
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
-
-                foreach (string email in unreadEmails)
+                try
                 {
-                    try
-                    {
-                        string[] parts = email.Split('\n');
-                        int id = int.Parse(parts[0].Split(':')[1]);
-                        double warehouseTime = double.Parse(parts[1].Split(':')[1]);
-                        double workHours = double.Parse(parts[2].Split(':')[1]);
+                    List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
 
-                        await remontService.SendToRemont(id, warehouseTime, workHours);
-                    }
-                    catch (Exception ex)
+                    foreach (string email in unreadEmails)
                     {
-                        continue;
-                    }
-                }           
+                        try
+                        {
+                            string[] parts = email.Split('\n');
+                            int id = int.Parse(parts[0].Split(':')[1]);
+                            double warehouseTime = double.Parse(parts[1].Split(':')[1]);
+                            double workHours = double.Parse(parts[2].Split(':')[1]);
 
-                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                            await remontService.SendToRemont(id, warehouseTime, workHours);
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    string a = ex.Message;
+                    throw ex;
+                }
             }
         }
 
         private async Task LoadDevicesOnRemontFromTable()
         {
-            //Ucitavanje uredjaja koji su posalti na remont, ali remont nije zavrsen (time Spent in remont == -1)
-            var uredjajiNaRemontu = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
-            var uredjaji = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
-
-            var uredjajiNaRemontuIzTabele = _table.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey.Equals("Remont") && item.TimeSpentInRemont.Equals(-1)).ToList();
-            var uredjajiTabela = _table.CreateQuery<Device>().AsEnumerable<Device>().Where(item => item.PartitionKey.Equals("Device")).ToList();
-
-            using(var tx = this.StateManager.CreateTransaction())
+            try
             {
-                foreach (var item in uredjajiNaRemontuIzTabele)
+                //Ucitavanje uredjaja koji su posalti na remont, ali remont nije zavrsen (time Spent in remont == -1)
+                var uredjajiNaRemontu = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+                var uredjaji = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
+
+                var uredjajiNaRemontuIzTabele = _table.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey.Equals("Remont") && item.TimeSpentInRemont.Equals(-1)).ToList();
+                var uredjajiTabela = _table.CreateQuery<Device>().AsEnumerable<Device>().Where(item => item.PartitionKey.Equals("Device")).ToList();
+
+                using (var tx = this.StateManager.CreateTransaction())
                 {
-                    await uredjajiNaRemontu.AddAsync(tx, item.DeviceId, item);
+                    foreach (var item in uredjajiNaRemontuIzTabele)
+                    {
+                        await uredjajiNaRemontu.AddAsync(tx, item.DeviceId, item);
+                    }
+
+                    uredjajiTabela.ForEach(async x => await uredjaji.AddAsync(tx, x.Id, x));
+
+
+                    await tx.CommitAsync();
                 }
-
-                uredjajiTabela.ForEach(async x => await uredjaji.AddAsync(tx, x.Id, x));
-
-
-                await tx.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
     }

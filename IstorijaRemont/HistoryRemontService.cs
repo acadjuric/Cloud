@@ -24,34 +24,50 @@ namespace IstorijaRemont
 
         public Task<List<Remont>> GetAllHisotryRemonts()
         {
-            return Task.FromResult<List<Remont>>(
-                tabela.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey == "Remont" && item.TimeSpentInRemont != -1).ToList()
-                );
+            try
+            {
+                return Task.FromResult<List<Remont>>(
+                    tabela.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey == "Remont" && item.TimeSpentInRemont != -1).ToList()
+                    );
+            }
+            catch (Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
+            }
         }
 
         public async Task WriteHistoryRemontsToTable()
         {
-            var uredjajiZaIstorjiu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontsForHistory");
-
-            using (var tx = this.state.CreateTransaction())
+            try
             {
-                var enumerator = (await uredjajiZaIstorjiu.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
-                while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
-                {
-                    try
-                    {
-                        TableOperation mergeOperation = TableOperation.Merge(enumerator.Current.Value);
-                        tabela.Execute(mergeOperation);
-                    }
-                    catch (StorageException ex)
-                    {
-                        string a = ex.Message;
-                        continue;
-                    }
-                }
+                var uredjajiZaIstorjiu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontsForHistory");
 
-                await uredjajiZaIstorjiu.ClearAsync();
-                await tx.CommitAsync();
+                using (var tx = this.state.CreateTransaction())
+                {
+                    var enumerator = (await uredjajiZaIstorjiu.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
+                    while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                    {
+                        try
+                        {
+                            TableOperation mergeOperation = TableOperation.Merge(enumerator.Current.Value);
+                            tabela.Execute(mergeOperation);
+                        }
+                        catch (StorageException ex)
+                        {
+                            string a = ex.Message;
+                            continue;
+                        }
+                    }
+
+                    await uredjajiZaIstorjiu.ClearAsync();
+                    await tx.CommitAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                string a = ex.Message;
+                throw ex;
             }
         }
     }
