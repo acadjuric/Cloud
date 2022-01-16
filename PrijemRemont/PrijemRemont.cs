@@ -85,11 +85,14 @@ namespace PrijemRemont
             // TODO: Replace the following sample code with your own logic 
             //       or remove this RunAsync override if it's not needed in your service.
 
-            var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("myDictionary");
 
             var uredjajiNaRemontu = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+            var uredjaji = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
 
             await LoadDevicesOnRemontFromTable();
+
+            // inicijalni upis uredjaja u cloud tabelu
+            //await remontService.WriteInitialDevicesToTable();
 
             while (true)
             {
@@ -112,23 +115,7 @@ namespace PrijemRemont
                     {
                         continue;
                     }
-                }
-
-                //using (var tx = this.StateManager.CreateTransaction())
-                //{
-                //    var result = await myDictionary.TryGetValueAsync(tx, "Counter");
-
-                //    ServiceEventSource.Current.ServiceMessage(this.Context, "Current Counter Value: {0}",
-                //        result.HasValue ? result.Value.ToString() : "Value does not exist.");
-
-                //    await myDictionary.AddOrUpdateAsync(tx, "Counter", 0, (key, value) => ++value);
-
-                //    // If an exception is thrown before calling CommitAsync, the transaction aborts, all changes are 
-                //    // discarded, and nothing is saved to the secondary replicas.
-                //    await tx.CommitAsync();
-                //}
-
-           
+                }           
 
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
@@ -138,15 +125,20 @@ namespace PrijemRemont
         {
             //Ucitavanje uredjaja koji su posalti na remont, ali remont nije zavrsen (time Spent in remont == -1)
             var uredjajiNaRemontu = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
+            var uredjaji = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
 
-            var uredjajiIzTabele = _table.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey.Equals("Remont") && item.TimeSpentInRemont.Equals(-1)).ToList();
+            var uredjajiNaRemontuIzTabele = _table.CreateQuery<Remont>().AsEnumerable<Remont>().Where(item => item.PartitionKey.Equals("Remont") && item.TimeSpentInRemont.Equals(-1)).ToList();
+            var uredjajiTabela = _table.CreateQuery<Device>().AsEnumerable<Device>().Where(item => item.PartitionKey.Equals("Device")).ToList();
 
             using(var tx = this.StateManager.CreateTransaction())
             {
-                foreach (var item in uredjajiIzTabele)
+                foreach (var item in uredjajiNaRemontuIzTabele)
                 {
                     await uredjajiNaRemontu.AddAsync(tx, item.DeviceId, item);
                 }
+
+                uredjajiTabela.ForEach(async x => await uredjaji.AddAsync(tx, x.Id, x));
+
 
                 await tx.CommitAsync();
             }

@@ -25,12 +25,22 @@ namespace PrijemRemont
         {
             var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
 
+            var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
+
             using (var tx = this.state.CreateTransaction())
             {
                 foreach (var key in keys)
                 {
                     if (await uredjajiNaRemontu.ContainsKeyAsync(tx, key))
                     {
+                        //device je objekat koji sadrzi kljuc i vrednost (key value pair)
+                        var device = await devices.TryGetValueAsync(tx, key);
+                        if (device.HasValue)
+                        {
+                            device.Value.OnRemont = false;
+                            await devices.SetAsync(tx, key, device.Value);
+                        }
+
                         await uredjajiNaRemontu.TryRemoveAsync(tx, key);
                     }
                 }
@@ -60,9 +70,17 @@ namespace PrijemRemont
         {
             var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
 
+            var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
+
             using (var tx = this.state.CreateTransaction())
             {
-                if (await uredjajiNaRemontu.ContainsKeyAsync(tx, id))
+                //device je objekat koji sadrzi kljuc i vrednost (key value pair)
+                var device = await devices.TryGetValueAsync(tx, id);
+
+                if (device.HasValue == false)
+                    return false;
+
+                if  (await uredjajiNaRemontu.ContainsKeyAsync(tx, id) || device.Value.OnRemont)
                 {
                     return false;
                 }
@@ -78,6 +96,10 @@ namespace PrijemRemont
                 };
 
                 await uredjajiNaRemontu.AddAsync(tx, id, remont);
+
+                //device je objekat koji sadrzi kljuc i vrednost (key value pair)
+                device.Value.OnRemont = true;
+                await devices.SetAsync(tx, id, device.Value);
 
                 await tx.CommitAsync();
 
@@ -103,6 +125,40 @@ namespace PrijemRemont
             }
 
             return true;
+        }
+
+        public async Task WriteInitialDevicesToTable()
+        {
+            List<Device> uredjaji = new List<Device>()
+            {
+                new Device(1){  Id = 1, Name= "PLC 2000", OnRemont= false},
+                new Device(2){  Id = 2, Name= "PLC 3017", OnRemont= false},
+                new Device(3){  Id = 3, Name= "PLC 4023", OnRemont= false},
+                new Device(4){  Id = 4, Name= "RTU 32", OnRemont= false},
+                new Device(5){  Id = 5, Name= "RTU 16", OnRemont= false},
+                new Device(6){  Id = 6, Name= "RTU 64", OnRemont= false},
+                new Device(7){  Id = 7, Name= "IED 200", OnRemont= false},
+                new Device(8){  Id = 8, Name= "IED 500", OnRemont= false},
+                new Device(9){  Id = 9, Name= "IED 300", OnRemont= false},
+                new Device(10){ Id =10, Name= "HUB SWITCH 256", OnRemont= false},
+                new Device(11){ Id =11, Name= "HUB SWITCH 128", OnRemont= false},
+                new Device(12){ Id =12, Name= "HUB SWITCH 512", OnRemont= false},
+            };
+
+            foreach (var item in uredjaji)
+            {
+                try
+                {
+                    TableOperation insert = TableOperation.Insert(item);
+                    tabela.Execute(insert);
+                }
+                catch (StorageException ex)
+                {
+                    string exception = ex.Message;
+                    continue;
+                }
+
+            }
         }
     }
 }

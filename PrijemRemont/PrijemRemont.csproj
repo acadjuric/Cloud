@@ -150,6 +150,7 @@
     <Reference Include="System.ServiceModel" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Device.cs" />
     <Compile Include="IRemont.cs" />
     <Compile Include="MailRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
