@@ -10,6 +10,7 @@ namespace PrijemRemont
     public class Remont:TableEntity
     {
         public int DeviceId { get; set; }
+        public string DeviceName { get; set; }
         public double HoursInWarehouse { get; set; }
         public double WorkHours { get; set; }
         public long NumberOfRemont { get; set; }
@@ -19,7 +20,9 @@ namespace PrijemRemont
         public Remont(int id)
         {
             PartitionKey = "Remont";
-            RowKey = id.ToString();
+            string rk = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + " " + id.ToString();
+            rk = rk.Replace(' ', '_').Replace('/','-');
+            RowKey = rk;
         }
 
         public Remont()

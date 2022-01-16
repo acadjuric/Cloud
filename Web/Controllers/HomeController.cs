@@ -21,7 +21,7 @@ namespace Web.Controllers
 
         [HttpPost]
         [Route("Home/Submit")]
-        public async Task<ActionResult> Submit(int device, double timeInWarehouse, double workHours)
+        public async Task<ViewResult> Submit(int device, double timeInWarehouse, double workHours)
         {
 
             var myBinding = new NetTcpBinding(SecurityMode.None);

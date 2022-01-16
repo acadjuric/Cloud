@@ -17,14 +17,16 @@
         }
     </style>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" ></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
+
+            var baseUrl = "http://desktop-je8ov7m:9035/";
             console.log("YAY");
 
             $.ajax({
                 type: 'GET',
-                url: "Home/GetDevices",
+                url: baseUrl + "Home/GetDevices",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (data) {
@@ -48,7 +50,7 @@
                 console.log("sad saljem ajax poziv za uredjaje");
                 $.ajax({
                     type: 'GET',
-                    url: "Home/GetDevices",
+                    url: baseUrl + "Home/GetDevices",
                     contentType: "application/json; charset=utf-8",
                     dataType: "json",
                     success: function (data) {
@@ -60,7 +62,7 @@
                     },
                     error: function () {
 
-                        alert("error");
+                        //alert("error");
                     }
                 })
             }, 30000);
@@ -71,7 +73,7 @@
                 console.log("sad saljem ajax poziv");
                 $.ajax({
                     type: 'GET',
-                    url: "Home/GetData",
+                    url: baseUrl + "Home/GetData",
                     contentType: "application/json; charset=utf-8",
                     dataType: "json",
                     success: function (data, status) {
@@ -84,7 +86,7 @@
                     },
                     error: function () {
 
-                        alert("error");
+                        //alert("error");
                     }
                 })
             }, 1000 * 60 * 1);
@@ -92,7 +94,7 @@
 
 
             function kreirajTabelu(data, istorijski) {
-                var table = "<table><tr> <th> Device id</th> <th>Time in warehouse (hours)</th> <th>Work hours</th> <th>Remont number</th> <th>Send to remont </th>";
+                var table = "<table><tr> <th> Device name</th> <th>Time in warehouse (hours)</th> <th>Work hours</th> <th>Remont number</th> <th>Send to remont </th>";
 
                 if (istorijski) {
                     table += "<th>Remont time (minutes)</th>";
@@ -103,7 +105,7 @@
 
                 for (let remont of data) {
                     console.log(remont);
-                    table += "<tr><td>" + remont.deviceId + "</td>";
+                    table += "<tr><td>" + remont.deviceName + "</td>";
                     table += "<td>" + remont.hoursInWarehouse + "</td>";
                     table += "<td>" + remont.workHours + "</td>";
                     table += "<td>" + remont.numberOfRemont + "</td>";

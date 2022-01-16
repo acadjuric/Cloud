@@ -88,6 +88,7 @@ namespace PrijemRemont
                 Remont remont = new Remont(id)
                 {
                     DeviceId = id,
+                    DeviceName = device.Value.Name,
                     HoursInWarehouse = timeInWarehouse,
                     WorkHours = workHours,
                     NumberOfRemont = await uredjajiNaRemontu.GetCountAsync(tx) + 1,
