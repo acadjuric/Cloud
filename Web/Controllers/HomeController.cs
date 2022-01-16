@@ -21,7 +21,7 @@ namespace Web.Controllers
 
         [HttpPost]
         [Route("Home/Submit")]
-        public async Task<ViewResult> Submit(int device, double timeInWarehouse, double workHours)
+        public async Task<JsonResult> Submit(int device, double timeInWarehouse, double workHours)
         {
 
             var myBinding = new NetTcpBinding(SecurityMode.None);
@@ -33,25 +33,33 @@ namespace Web.Controllers
 
                 try
                 {
+                    string messageResponse = string.Empty;
+
                     client = myChannelFactory.CreateChannel();
+
                     if (await client.SendToRemont(device, timeInWarehouse, workHours))
                     {
-                        ViewData["Title"] = "POSLATO NA REMONT";
+                        messageResponse = "POSLATO NA REMONT";
                     }
                     else
                     {
-                        ViewData["Title2"] = "NIJE USPEO REMONT";
+                        messageResponse = "NIJE POSLATO NA REMONT";
                     }
+                    var uredjaji = await client.GetAllDevices();
+
                     ((ICommunicationObject)client).Close();
                     myChannelFactory.Close();
+
+                    return Json(new { message = messageResponse, devices = uredjaji });
                 }
                 catch (Exception e)
                 {
                     string a = e.Message;
                     (client as ICommunicationObject)?.Abort();
+                    throw e;
                 }
             }
-            return View("Index");
+
         }
 
         [HttpGet]
@@ -61,7 +69,7 @@ namespace Web.Controllers
             var myBinding = new NetTcpBinding(SecurityMode.None);
             var myEndpoint = new EndpointAddress("net.tcp://localhost:46000/PublisherEndpoint");
 
-            
+
             using (var myChannelFactory = new ChannelFactory<IPublisher>(myBinding, myEndpoint))
             {
                 IPublisher client = null;
@@ -87,7 +95,7 @@ namespace Web.Controllers
                     throw e;
                 }
             }
-            
+
         }
 
 
