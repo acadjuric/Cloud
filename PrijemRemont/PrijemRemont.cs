@@ -94,51 +94,46 @@ namespace PrijemRemont
             // inicijalni upis uredjaja u cloud tabelu
             //await remontService.WriteInitialDevicesToTable();
 
-            var timer = new System.Threading.Timer((e) =>
-            {
-                Task.Factory.StartNew(remontService.WriteToTable);
+            //var timer = new System.Threading.Timer((e) =>
+            //{
+            //    Task.Factory.StartNew(remontService.WriteToTable, cancellationToken);
 
-            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            //}, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
             while (true)
             {
-                try
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
+
+                foreach (string email in unreadEmails)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
-
-                    foreach (string email in unreadEmails)
+                    try
                     {
-                        try
-                        {
-                            string[] parts = email.Split('\n');
-                            int id = int.Parse(parts[0].Split(':')[1]);
-                            double warehouseTime = double.Parse(parts[1].Split(':')[1]);
-                            double workHours = double.Parse(parts[2].Split(':')[1]);
+                        string[] parts = email.Split('\n');
+                        int id = int.Parse(parts[0].Split(':')[1]);
+                        double warehouseTime = double.Parse(parts[1].Split(':')[1]);
+                        double workHours = double.Parse(parts[2].Split(':')[1]);
 
-                            await remontService.SendToRemont(id, warehouseTime, workHours);
-                        }
-                        catch
-                        {
-                            continue;
-                        }
+                        await remontService.SendToRemont(id, warehouseTime, workHours);
                     }
+                    catch
+                    {
+                        continue;
+                    }
+                }
 
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
-                }
-                catch (OperationCanceledException ex)
-                {
-                    string a = ex.Message;
-                    // servis pada -> upis u bazu
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
 
-                    await Task.Factory.StartNew(remontService.WriteToTable);
-                }
-                catch (Exception ex)
-                {
-                    string a = ex.Message;
-                    throw ex;
-                }
+                //catch (OperationCanceledException ex)
+                //{
+                //    string a = ex.Message;
+                //    // servis pada -> upis u bazu
+
+                //    await Task.Factory.StartNew(remontService.WriteToTable);
+                //    throw ex;
+                //}
             }
         }
 
@@ -160,7 +155,12 @@ namespace PrijemRemont
                         await uredjajiNaRemontu.AddAsync(tx, item.DeviceId, item);
                     }
 
-                    uredjajiTabela.ForEach(async x => await uredjaji.AddAsync(tx, x.Id, x));
+                    foreach (var item in uredjajiTabela)
+                    {
+                        await uredjaji.AddAsync(tx, item.Id, item);
+                    }
+
+                    //uredjajiTabela.ForEach(async x => await uredjaji.AddAsync(tx, x.Id, x));
 
 
                     await tx.CommitAsync();
