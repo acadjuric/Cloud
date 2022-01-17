@@ -23,7 +23,7 @@
 
             var baseUrl = "http://desktop-je8ov7m:9035/";
             console.log("YAY");
-
+            // Prvi pozivi za prikaz nekog sadrzaja na UI
             $.ajax({
                 type: 'GET',
                 url: baseUrl + "Home/GetDevices",
@@ -43,6 +43,26 @@
                     alert("error");
                 }
             })
+
+            $.ajax({
+                type: 'GET',
+                url: baseUrl + "Home/GetData",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data, status) {
+
+                    console.log(data);
+
+                    $(".aktivni").html(kreirajTabelu(data.aktivni, false));
+
+                    $(".istorija").html(kreirajTabelu(data.istorija, true));
+                },
+                error: function () {
+
+                    //alert("error");
+                }
+            })
+            // Kraj prvih poziva
 
 
 
@@ -93,7 +113,9 @@
                         //alert("error");
                     }
                 })
-            }, 1000 * 60 * 1);
+            }, 30000);
+            //30 sec
+            //1000 * 60 * 1
             //milisec * sec * min
 
 
@@ -181,6 +203,9 @@
                         if (data.devices !== undefined && data.devices.length > 0) {
 
                             $(".divSelect").html(kreirajSelect(data.devices));
+
+                            $("#timeInWarehouse").val("");
+                            $("#workHours").val("");
                         }
                     },
                     error: function (error) {

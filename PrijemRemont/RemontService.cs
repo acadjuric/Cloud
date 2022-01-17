@@ -109,7 +109,7 @@ namespace PrijemRemont
                         DeviceName = device.Value.Name,
                         HoursInWarehouse = timeInWarehouse,
                         WorkHours = workHours,
-                        NumberOfRemont = await uredjajiNaRemontu.GetCountAsync(tx) + 1,
+                        NumberOfRemont = new Random().Next(1, int.MaxValue),
                         SendToRemont = DateTime.Now,
                         TimeSpentInRemont = -1,
                     };
@@ -121,8 +121,6 @@ namespace PrijemRemont
                     await devices.SetAsync(tx, id, device.Value);
 
                     await tx.CommitAsync();
-
-                    //await WriteToTable(remont);
                 }
 
 
@@ -145,7 +143,7 @@ namespace PrijemRemont
 
                 using (var tx = this.state.CreateTransaction())
                 {
-
+                    //svaki batch mora da sadrzi entitete sa istim PartitionKey-om
                     TableBatchOperation batchOperationDevices = new TableBatchOperation();
                     TableBatchOperation batchOperationRemonts = new TableBatchOperation();
 
