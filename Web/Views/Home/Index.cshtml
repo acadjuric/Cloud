@@ -22,7 +22,7 @@
         $(document).ready(function () {
 
             var baseUrl = "http://desktop-je8ov7m:9035/";
-            console.log("YAY");
+
             // Prvi pozivi za prikaz nekog sadrzaja na UI
             $.ajax({
                 type: 'GET',
@@ -127,10 +127,9 @@
                 }
 
                 table += "</tr>";
-                console.log(data);
 
                 for (let remont of data) {
-                    console.log(remont);
+
                     table += "<tr><td>" + remont.deviceName + "</td>";
                     table += "<td>" + remont.hoursInWarehouse + "</td>";
                     table += "<td>" + remont.workHours + "</td>";
