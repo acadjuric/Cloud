@@ -94,46 +94,49 @@ namespace PrijemRemont
             // inicijalni upis uredjaja u cloud tabelu
             //await remontService.WriteInitialDevicesToTable();
 
-            //var timer = new System.Threading.Timer((e) =>
-            //{
-            //    Task.Factory.StartNew(remontService.WriteToTable, cancellationToken);
+            var timer = new System.Threading.Timer((e) =>
+            {
+                Task.Factory.StartNew(remontService.WriteToTable, cancellationToken);
 
-            //}, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
             while (true)
             {
 
-                cancellationToken.ThrowIfCancellationRequested();
-
-                List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
-
-                foreach (string email in unreadEmails)
+                try
                 {
-                    try
-                    {
-                        string[] parts = email.Split('\n');
-                        int id = int.Parse(parts[0].Split(':')[1]);
-                        double warehouseTime = double.Parse(parts[1].Split(':')[1]);
-                        double workHours = double.Parse(parts[2].Split(':')[1]);
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                        await remontService.SendToRemont(id, warehouseTime, workHours);
-                    }
-                    catch
+                    List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
+
+                    foreach (string email in unreadEmails)
                     {
-                        continue;
+                        try
+                        {
+                            string[] parts = email.Split('\n');
+                            int id = int.Parse(parts[0].Split(':')[1]);
+                            double warehouseTime = double.Parse(parts[1].Split(':')[1]);
+                            double workHours = double.Parse(parts[2].Split(':')[1]);
+
+                            await remontService.SendToRemont(id, warehouseTime, workHours);
+                        }
+                        catch
+                        {
+                            continue;
+                        }
                     }
+
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                 }
+                catch (OperationCanceledException ex)
+                {
+                    // servis pada -> upis u bazu
+                    string a = ex.Message;
+                    var task = Task.Factory.StartNew(remontService.WriteToTable);
+                    task.Wait();
 
-                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
-
-                //catch (OperationCanceledException ex)
-                //{
-                //    string a = ex.Message;
-                //    // servis pada -> upis u bazu
-
-                //    await Task.Factory.StartNew(remontService.WriteToTable);
-                //    throw ex;
-                //}
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
             }
         }
 
@@ -152,22 +155,22 @@ namespace PrijemRemont
                 {
                     foreach (var item in uredjajiNaRemontuIzTabele)
                     {
-                        await uredjajiNaRemontu.AddAsync(tx, item.DeviceId, item);
+                        if (!await uredjajiNaRemontu.ContainsKeyAsync(tx, item.DeviceId))
+                            await uredjajiNaRemontu.AddAsync(tx, item.DeviceId, item);
                     }
 
                     foreach (var item in uredjajiTabela)
                     {
-                        await uredjaji.AddAsync(tx, item.Id, item);
+                        if (!await uredjaji.ContainsKeyAsync(tx, item.Id))
+                            await uredjaji.AddAsync(tx, item.Id, item);
                     }
-
-                    //uredjajiTabela.ForEach(async x => await uredjaji.AddAsync(tx, x.Id, x));
-
 
                     await tx.CommitAsync();
                 }
             }
             catch (Exception ex)
             {
+                string a = ex.Message;
                 throw ex;
             }
         }
