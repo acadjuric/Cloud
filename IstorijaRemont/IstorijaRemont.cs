@@ -104,39 +104,67 @@ namespace IstorijaRemont
 
             while (true)
             {
-                await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
-
-                cancellationToken.ThrowIfCancellationRequested();
-                //logika za pozivanje PrijemRemont mikroservisa za dobavljanje trenutnih uredjaja na remontu radi provere
-                // uslova za upis u istorijsku bazu
-
-                List<Remont> uredjajiNaRemontu = await PrijemRemont.InvokeWithRetryAsync(client => client.Channel.GetAllRemonts());
-
-                using (var tx = this.StateManager.CreateTransaction())
+                try
                 {
-                    await uredjajiZaIstorju.ClearAsync();
-                    keys.Clear();
+                    await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
 
-                    foreach (var item in uredjajiNaRemontu)
+                    cancellationToken.ThrowIfCancellationRequested();
+                    //logika za pozivanje PrijemRemont mikroservisa za dobavljanje trenutnih uredjaja na remontu radi provere
+                    // uslova za upis u istorijsku bazu
+
+                    List<Remont> uredjajiNaRemontu = await PrijemRemont.InvokeWithRetryAsync(client => client.Channel.GetAllRemonts());
+
+                    using (var tx = this.StateManager.CreateTransaction())
                     {
-                        //Remont je zavrsen ako je proveo bar 5 MINUTA u remont fazi
-                        if ((DateTime.Now - item.SendToRemont).TotalMinutes >= 5)
+                        await uredjajiZaIstorju.ClearAsync();
+                        keys.Clear();
+
+                        foreach (var item in uredjajiNaRemontu)
                         {
-                            item.TimeSpentInRemont = Math.Round((DateTime.Now - item.SendToRemont).TotalMinutes, 2);
-                            await uredjajiZaIstorju.AddAsync(tx, item.DeviceId, item);
-                            keys.Add(item.DeviceId);
+                            //Remont je zavrsen ako je proveo bar 5 MINUTA u remont fazi
+                            if ((DateTime.Now - item.SendToRemont).TotalMinutes >= 5)
+                            {
+                                item.TimeSpentInRemont = Math.Round((DateTime.Now - item.SendToRemont).TotalMinutes, 2);
+                                await uredjajiZaIstorju.AddAsync(tx, item.DeviceId, item);
+                                keys.Add(item.DeviceId);
+                            }
                         }
+
+                        await tx.CommitAsync();
                     }
 
-                    await tx.CommitAsync();
+                    //ima remonta koji treba da idu u istoriju
+                    if (keys.Count > 0)
+                    {
+                        await historyRemontService.WriteHistoryRemontsToTable();
+
+                        await PrijemRemont.InvokeWithRetryAsync(client => client.Channel.DeleteHistoryRemontsFromCurrentRemonts(keys));
+
+                        //ciscenje kolekcija zbog pada servisa
+                        using (var tx = this.StateManager.CreateTransaction())
+                        {
+                            await uredjajiZaIstorju.ClearAsync();
+
+                            await tx.CommitAsync();
+
+                            keys.Clear();
+                        }
+
+                    }
                 }
-
-                //ima remonta koji treba da idu u istoriju
-                if (keys.Count > 0)
+                catch (OperationCanceledException ex)
                 {
-                    await historyRemontService.WriteHistoryRemontsToTable();
+                    //pad servisa -> upis u cloud tabelu i obavestavanje 'Prijem Remont-a' koji uredjaji su zavrsili sa remontom
+                    string a = ex.Message;
+                    if (keys.Count > 0)
+                    {
+                        var task = Task.Factory.StartNew(historyRemontService.WriteHistoryRemontsToTable);
+                        task.Wait();
 
-                    await PrijemRemont.InvokeWithRetryAsync(client => client.Channel.DeleteHistoryRemontsFromCurrentRemonts(keys));
+                        await PrijemRemont.InvokeWithRetryAsync(client => client.Channel.DeleteHistoryRemontsFromCurrentRemonts(keys));
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
 
             }
