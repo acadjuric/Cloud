@@ -50,13 +50,16 @@ namespace Web.Controllers
                     ((ICommunicationObject)client).Close();
                     myChannelFactory.Close();
 
-                    return Json(new { message = messageResponse, devices = uredjaji });
+                    if (uredjaji == null)
+                        return Json(new { message = messageResponse, devices = new List<Device>() });
+                    else
+                        return Json(new { message = messageResponse, devices = uredjaji });
                 }
                 catch (Exception e)
                 {
                     string a = e.Message;
                     (client as ICommunicationObject)?.Abort();
-                    throw e;
+                    return Json(new { message = e.Message, devices = new List<Device>() });
                 }
             }
 
@@ -79,20 +82,19 @@ namespace Web.Controllers
                     client = myChannelFactory.CreateChannel();
                     Tuple<List<Remont>, List<Remont>> result = await client.GetRemontAndHistoryRemont();
 
-                    ViewData["activeData"] = result.Item1;
-                    ViewData["historyData"] = result.Item2;
-
                     ((ICommunicationObject)client).Close();
                     myChannelFactory.Close();
 
-
-                    return Json(new { aktivni = result.Item1, istorija = result.Item2 });
+                    if (result == null)
+                        return Json(new { aktivni = new List<Remont>(), istorija = new List<Remont>() });
+                    else
+                        return Json(new { aktivni = result.Item1, istorija = result.Item2 });
                 }
                 catch (Exception e)
                 {
                     string a = e.Message;
                     (client as ICommunicationObject)?.Abort();
-                    throw e;
+                    return Json(new { aktivni = new List<Remont>(), istorija = new List<Remont>() });
                 }
             }
 
@@ -120,14 +122,16 @@ namespace Web.Controllers
                     ((ICommunicationObject)client).Close();
                     myChannelFactory.Close();
 
-
-                    return Json(result);
+                    if (result == null)
+                        return Json(new List<Device>());
+                    else
+                        return Json(result);
                 }
                 catch (Exception e)
                 {
                     string a = e.Message;
                     (client as ICommunicationObject)?.Abort();
-                    throw e;
+                    return Json(new List<Device>());
                 }
             }
 

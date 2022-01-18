@@ -197,7 +197,8 @@ namespace PrijemRemont
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return;
             }
         }
     }

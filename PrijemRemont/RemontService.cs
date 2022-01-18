@@ -53,7 +53,8 @@ namespace PrijemRemont
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return;
             }
         }
 
@@ -78,7 +79,8 @@ namespace PrijemRemont
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return new List<Remont>();
             }
         }
 
@@ -131,7 +133,8 @@ namespace PrijemRemont
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return false;
             }
         }
 
@@ -176,12 +179,14 @@ namespace PrijemRemont
             {
                 //The remote server returned an error: (409) Conflict.
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return;
             }
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return;
             }
         }
 
@@ -208,7 +213,8 @@ namespace PrijemRemont
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return new List<Device>();
             }
         }
 

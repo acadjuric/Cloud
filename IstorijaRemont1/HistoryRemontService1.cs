@@ -30,7 +30,8 @@ namespace IstorijaRemont1
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return Task.FromResult<List<Remont>>(new List<Remont>());
             }
         }
 
@@ -61,7 +62,8 @@ namespace IstorijaRemont1
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return;
             }
         }
     }

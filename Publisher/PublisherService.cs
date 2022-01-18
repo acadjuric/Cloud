@@ -45,7 +45,8 @@ namespace Publisher
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return null;
             }
         }
 
@@ -63,7 +64,8 @@ namespace Publisher
             catch (Exception ex)
             {
                 string a = ex.Message;
-                throw ex;
+                //throw ex;
+                return null;
             }
 
         }
