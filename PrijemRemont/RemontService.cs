@@ -86,6 +86,8 @@ namespace PrijemRemont
         {
             try
             {
+                if (!Validation(id, timeInWarehouse, workHours)) return false;
+
                 var uredjajiNaRemontu = await this.state.GetOrAddAsync<IReliableDictionary<int, Remont>>("RemontDevices");
 
                 var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
@@ -208,6 +210,11 @@ namespace PrijemRemont
                 string a = ex.Message;
                 throw ex;
             }
+        }
+
+        private bool Validation(int id, double timeInWarehouse,double workHours)
+        {
+            return id <= 0 || workHours < 1 || timeInWarehouse < 0 ? false : true;
         }
 
         public async Task WriteInitialDevicesToTable()
