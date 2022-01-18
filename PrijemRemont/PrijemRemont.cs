@@ -107,21 +107,47 @@ namespace PrijemRemont
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    List<string> unreadEmails = await mailRepository.GetBodyFromUnreadMails();
+                    Tuple<List<string>, List<string>> emails = await mailRepository.GetBodyFromUnreadMails();
+                    List<string> unreadEmails = emails.Item2;
+                    List<string> sendersEmails = emails.Item1;
 
                     foreach (string email in unreadEmails)
                     {
                         try
                         {
                             string[] parts = email.Split('\n');
-                            int id = int.Parse(parts[0].Split(':')[1]);
+                            //int id = int.Parse(parts[0].Split(':')[1]);
+                            string idOrName = parts[0].Split(':')[1];
+                            int id;
+                            bool isNumber = int.TryParse(idOrName, out id);
+
+                            if (!isNumber)
+                            {
+                                id = await remontService.FindDeviceByName(idOrName.TrimEnd('\r','\n'));
+
+                                //nije pronadjen uredjaj sa prosledjenim nazivom
+                                if (id == -1)
+                                {
+                                    await mailRepository.SendEmail(sendersEmails[unreadEmails.IndexOf(email)], email, 1);
+                                    continue;
+                                }
+                            }
+                                
+
                             double warehouseTime = double.Parse(parts[1].Split(':')[1]);
                             double workHours = double.Parse(parts[2].Split(':')[1]);
 
-                            await remontService.SendToRemont(id, warehouseTime, workHours);
+                            if (await remontService.SendToRemont(id, warehouseTime, workHours))
+                                await mailRepository.SendEmail(sendersEmails[unreadEmails.IndexOf(email)], email, 0);
+
+                            else
+                                await mailRepository.SendEmail(sendersEmails[unreadEmails.IndexOf(email)], email, 1);
+
                         }
                         catch
                         {
+                            await mailRepository.SendEmail(sendersEmails[unreadEmails.IndexOf(email)], email, 2);
+
                             continue;
                         }
                     }

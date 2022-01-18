@@ -212,7 +212,27 @@ namespace PrijemRemont
             }
         }
 
-        private bool Validation(int id, double timeInWarehouse,double workHours)
+        public async Task<int> FindDeviceByName(string name)
+        {
+            if (string.IsNullOrEmpty(name) || string.IsNullOrWhiteSpace(name))
+                return -1;
+
+            var devices = await this.state.GetOrAddAsync<IReliableDictionary<int, Device>>("Devices");
+
+            using (var tx = this.state.CreateTransaction())
+            {
+                var enumerator = (await devices.CreateEnumerableAsync(tx)).GetAsyncEnumerator();
+                while (await enumerator.MoveNextAsync(new System.Threading.CancellationToken()))
+                {
+                    if (enumerator.Current.Value.Name.ToLower().Equals(name.ToLower()))
+                        return enumerator.Current.Key;
+                }
+            }
+
+            return -1;
+        }
+
+        private bool Validation(int id, double timeInWarehouse, double workHours)
         {
             return id <= 0 || workHours < 1 || timeInWarehouse < 0 ? false : true;
         }
