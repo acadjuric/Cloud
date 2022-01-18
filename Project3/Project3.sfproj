@@ -32,7 +32,7 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\IstorijaRemont\IstorijaRemont.csproj" />
+    <ProjectReference Include="..\IstorijaRemont1\IstorijaRemont1.csproj" />
     <ProjectReference Include="..\PrijemRemont\PrijemRemont.csproj" />
     <ProjectReference Include="..\Publisher\Publisher.csproj" />
     <ProjectReference Include="..\Web\Web.csproj">

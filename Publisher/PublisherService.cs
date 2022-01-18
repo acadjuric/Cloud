@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using IstorijaRemont;
+using IstorijaRemont1;
 using Microsoft.ServiceFabric.Services.Client;
 using Microsoft.ServiceFabric.Services.Communication.Client;
 using Microsoft.ServiceFabric.Services.Communication.Wcf;
@@ -16,7 +16,7 @@ namespace Publisher
     {
 
         ServicePartitionClient<WcfCommunicationClient<IRemont>> prijemRemont = null;
-        ServicePartitionClient<WcfCommunicationClient<IHistoryRemont>> historyRemont = null;
+        ServicePartitionClient<WcfCommunicationClient<IHistoryRemont1>> historyRemont = null;
 
         public PublisherService()
         {
@@ -29,10 +29,9 @@ namespace Publisher
                 new ServicePartitionKey(0)
                 );
 
-            historyRemont = new ServicePartitionClient<WcfCommunicationClient<IHistoryRemont>>(
-                new WcfCommunicationClientFactory<IHistoryRemont>(bindingHistory),
-                new Uri("fabric:/Project3/IstorijaRemont"),
-                new ServicePartitionKey(0)
+            historyRemont = new ServicePartitionClient<WcfCommunicationClient<IHistoryRemont1>>(
+                new WcfCommunicationClientFactory<IHistoryRemont1>(bindingHistory),
+                new Uri("fabric:/Project3/IstorijaRemont1")
                 );
         }
 
