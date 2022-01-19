@@ -35,9 +35,13 @@
 
                         console.log(data);
 
-                        $(".aktivni").html(kreirajTabelu(data.aktivni, false));
+                        if (data.aktivni.length > 0) {
+                            $(".aktivni").html(kreirajTabelu(data.aktivni, false));
+                        }
+                        if (data.istorija.length > 0) {
+                            $(".istorija").html(kreirajTabelu(data.istorija, true));
+                        }
 
-                        $(".istorija").html(kreirajTabelu(data.istorija, true));
                     },
                     error: function () {
 
@@ -65,8 +69,8 @@
                     }
                 })
 
-                
-                
+
+
             }, 2000)
             // Kraj prvih poziva
 
@@ -109,9 +113,14 @@
 
                         console.log(data);
 
-                        $(".aktivni").html(kreirajTabelu(data.aktivni, false));
+                        if (data.aktivni.length > 0) {
+                            $(".aktivni").html(kreirajTabelu(data.aktivni, false));
+                        }
 
-                        $(".istorija").html(kreirajTabelu(data.istorija, true));
+                        if (data.istorija.length > 0) {
+                            $(".istorija").html(kreirajTabelu(data.istorija, true));
+                        }
+
                     },
                     error: function () {
 
@@ -129,7 +138,7 @@
                 var table = "<table><tr> <th> Device name</th> <th>Time in warehouse (hours)</th> <th>Work hours</th> <th>Remont number</th> <th>Send to remont </th>";
 
                 if (istorijski) {
-                    table += "<th>Remont time (minutes)</th>";
+                    table += "<th>Remont time (hours)</th>";
                 }
 
                 table += "</tr>";
