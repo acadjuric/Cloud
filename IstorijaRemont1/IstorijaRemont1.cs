@@ -102,7 +102,7 @@ namespace IstorijaRemont1
             {
                 try
                 {
-                    await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+                    await Task.Delay(TimeSpan.FromMinutes(0.5), cancellationToken);
 
                     cancellationToken.ThrowIfCancellationRequested();
                     //logika za pozivanje PrijemRemont mikroservisa za dobavljanje trenutnih uredjaja na remontu radi provere
@@ -115,7 +115,7 @@ namespace IstorijaRemont1
                     foreach (var item in uredjajiNaRemontu)
                     {
                         //Remont je zavrsen ako je proveo bar 5 MINUTA u remont fazi
-                        if ((DateTime.Now - item.SendToRemont).TotalMinutes >= 5)
+                        if ((DateTime.Now - item.SendToRemont).TotalMinutes >= 2)
                         {
                             item.TimeSpentInRemont = Math.Round((DateTime.Now - item.SendToRemont).TotalMinutes, 2);
                             //await uredjajiZaIstorju.AddAsync(tx, item.DeviceId, item);

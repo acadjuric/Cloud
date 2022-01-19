@@ -67,7 +67,7 @@
 
                 
                 
-            }, 3000)
+            }, 2000)
             // Kraj prvih poziva
 
 
@@ -93,8 +93,9 @@
                         //alert("error");
                     }
                 })
-            }, 30000);
-            //30 sec
+            }, 5000);
+            //5000 -> 5 sec
+            //30 0000 -> 30 sec
 
             //AKTIVNI I ISTORIJA INTERVAL
             setInterval(function () {
@@ -117,8 +118,9 @@
                         //alert("error");
                     }
                 })
-            }, 30000);
-            //30 sec
+            }, 5000);
+            //5000 -> 5 sec
+            //30 0000 -> 30 sec
             //1000 * 60 * 1
             //milisec * sec * min
 
@@ -176,17 +178,16 @@
 
             $("#submitBtn").click(function () {
 
-                if ($("#timeInWarehouse").val() === undefined) {
-                    alert("Unesite broj u polje 'Time in warehouse' ");
+                if ($("#timeInWarehouse").val() === "") {
+                    alert("Unesite broj u polje 'Vreme provedeno u magacinu (sati)' ");
                     $("#timeInWarehouse").focus();
                     return false;
                 }
-                if ($("#workHours").val() === undefined) {
-                    alert("Unesite broj u polje 'Work hours' ");
+                if ($("#workHours").val() === "") {
+                    alert("Unesite broj u polje 'Vreme eksploatacije (sati)' ");
                     $("#workHours").focus();
                     return false;
                 }
-
 
                 var device = {
                     "device": parseInt($("#myselect").val()),

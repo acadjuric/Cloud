@@ -98,7 +98,7 @@ namespace PrijemRemont
             {
                 Task.Factory.StartNew(remontService.WriteToTable, cancellationToken);
 
-            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(0.5));
 
             while (true)
             {
@@ -123,7 +123,7 @@ namespace PrijemRemont
 
                             if (!isNumber)
                             {
-                                id = await remontService.FindDeviceByName(idOrName.TrimEnd('\r','\n'));
+                                id = await remontService.FindDeviceByName(idOrName.Trim().TrimEnd('\r','\n'));
 
                                 //nije pronadjen uredjaj sa prosledjenim nazivom
                                 if (id == -1)
